@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DAILY CARE BOARD 📌</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="index_style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+</head>
+<body>
+
+    <nav>
+
+        <div class="logo">DAILY CARE BOARD 📌</div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="switchTab('main')" data-lang="nav_main">Główna</button>
+            <button class="nav-btn" onclick="switchTab('health')" data-lang="nav_health">Zdrowie</button>
+        </div>
+
+        <div class="right-nav">
+            <button class="lang-btn" onclick="toggleLanguage()">PL | EN</button>
+            
+            <div id="auth-buttons">
+                <button class="btn-outline" onclick="openAuthModal('login')" style="font-size:0.8rem; padding: 5px 10px;">Login</button>
+            </div>
+
+            <div class="profile-icon" onclick="toggleProfileModal()" id="profile-btn" style="display:none;">
+                <span class="material-symbols-outlined">person</span>
+            </div>
+        </div>
+
+    </nav>
+
+    <div class="toolbar">
+
+        <button onclick="createWidget('note')" data-lang="btn_note">📝 Notatka</button>
+        <button onclick="createWidget('todo')" data-lang="btn_todo">📋 Lista To-Do</button>
+        <button onclick="createWidget('reminder')" data-lang="btn_reminder">⏰ Przypomnienie</button>
+        <button onclick="openChartModal()" data-lang="btn_chart">📊 Wykres</button>
+
+    </div>
+
+    <div id="board-container">
+        
+        <div id="main-tab" class="tab-content active-tab"></div>
+
+        <div id="health-tab" class="tab-content">
+            
+            <div class="widget draggable" style="top: 20px; left: 660px; width: 320px; height: 380px;">
+                <div class="widget-header">
+                    <span data-lang="nav_calendar">📅 Kalendarz</span>
+                    <div class="widget-controls"><span class="collapse-btn" onclick="toggleCollapse(this)">_</span></div>
+                </div>
+                <div class="widget-body" style="overflow: hidden;">
+                    <div class="calendar-header">
+                        <button onclick="changeMonth(-1)">&lt;</button>
+                        <h3 id="month-year" style="font-size: 1rem; margin:0;"></h3>
+                        <button onclick="changeMonth(1)">&gt;</button>
+                    </div>
+                    <div class="calendar-wrapper">
+                        <div class="calendar-grid-header" id="calendar-days-header"></div>
+                        <div class="calendar-grid" id="calendar-grid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="widget draggable" style="top: 20px; left: 20px; width: 300px;">
+                <div class="widget-header">
+                    <span data-lang="health_water">💧 Nawodnienie</span>
+                    <div class="widget-controls"><span class="collapse-btn" onclick="toggleCollapse(this)">_</span></div>
+                </div>
+                <div class="widget-body">
+                    <div class="stat-display">
+                        <h3 id="water-current">0 ml</h3>
+                        <small>
+                            <span data-lang="goal">Cel</span>: 
+                            <span id="water-goal-disp" class="editable-goal" onclick="editGoal('water')">2000</span> ml ✏️
+                        </small>
+                    </div>
+                    <div class="controls-row">
+                        <input type="number" id="glass-size" value="250" placeholder="ml"> <span data-lang="unit_ml">ml</span>
+                    </div>
+                    <div class="controls-row">
+                        <button onclick="addWater()" data-lang="btn_add">+</button>
+                        <button class="btn-outline" onclick="resetWater()" data-lang="btn_reset">Reset</button>
+                    </div>
+                    <progress id="water-progress" value="0" max="100"></progress>
+                </div>
+            </div>
+
+            <div class="widget draggable" style="top: 20px; left: 340px; width: 300px;">
+                <div class="widget-header">
+                    <span data-lang="health_kcal">🔥 Kalorie</span>
+                    <div class="widget-controls"><span class="collapse-btn" onclick="toggleCollapse(this)">_</span></div>
+                </div>
+                <div class="widget-body">
+                    <div class="stat-display" style="margin-bottom: 5px;">
+                        <h3 id="kcal-current">0 kcal</h3>
+                        <small>
+                            <span data-lang="goal">Cel</span>: 
+                            <span id="kcal-goal-disp" class="editable-goal" onclick="editGoal('kcal')">2000</span> kcal ✏️
+                        </small>
+                    </div>
+
+                    <div id="macro-display" style="display: flex; justify-content: space-around; font-size: 0.75rem; color: #A0A0A0; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
+                        <span title="Białko (25%)">🥩 B: <b id="macro-p" style="color:#E0E0E0;">0</b>g</span>
+                        <span title="Węglowodany (50%)">🍞 W: <b id="macro-c" style="color:#E0E0E0;">0</b>g</span>
+                        <span title="Tłuszcze (25%)">🥑 T: <b id="macro-f" style="color:#E0E0E0;">0</b>g</span>
+                    </div>
+
+                    <div class="controls-row">
+                        <input type="number" id="kcal-input" placeholder="kcal">
+                        <button onclick="addKcal()" data-lang="btn_add">+</button>
+                    </div>
+                    <progress id="kcal-progress" value="0" max="100"></progress>
+                </div>
+            </div>
+
+            <div class="widget draggable" style="top: 300px; left: 20px; width: 300px;">
+                <div class="widget-header">
+                    <span data-lang="health_steps">👣 Kroki</span>
+                    <div class="widget-controls"><span class="collapse-btn" onclick="toggleCollapse(this)">_</span></div>
+                </div>
+                <div class="widget-body">
+                    <div class="stat-display">
+                        <h3 id="steps-current">0</h3>
+                        <small>
+                            <span data-lang="goal">Cel</span>: 
+                            <span id="steps-goal-disp" class="editable-goal" onclick="editGoal('steps')">10000</span> ✏️
+                        </small>
+                    </div>
+                    <div class="controls-row">
+                        <input type="number" id="steps-input" placeholder="Kroki">
+                        <button onclick="updateSteps()" data-lang="btn_update">Aktualizuj</button>
+                    </div>
+                    <progress id="steps-progress" value="0" max="100"></progress>
+                </div>
+            </div>
+
+            <div class="widget draggable" style="top: 300px; left: 340px; width: 300px;">
+                <div class="widget-header">
+                    <span data-lang="health_sleep">💤 Sen</span>
+                    <div class="widget-controls"><span class="collapse-btn" onclick="toggleCollapse(this)">_</span></div>
+                </div>
+                <div class="widget-body">
+                    <div class="stat-display">
+                        <h3 id="sleep-current">0 h</h3>
+                        <small>
+                            <span data-lang="goal">Cel</span>: 
+                            <span id="sleep-goal-disp" class="editable-goal" onclick="editGoal('sleep')">8</span> h ✏️
+                        </small>
+                    </div>
+                    <div class="controls-row">
+                        <input type="number" id="sleep-input" placeholder="h">
+                        <button onclick="updateSleep()" data-lang="btn_set">Ustaw</button>
+                    </div>
+                    <progress id="sleep-progress" value="0" max="100"></progress>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="profile-modal" class="modal">
+
+        <div class="modal-content">
+            <span class="close-modal" onclick="toggleProfileModal()">&times;</span>
+            <h2 data-lang="profile_title">👤 Twój Profil</h2>
+            <div class="form-group">
+                <label data-lang="label_gender">Płeć:</label>
+                <select id="gender">
+                    <option value="male" data-lang="opt_male">Mężczyzna</option>
+                    <option value="female" data-lang="opt_female">Kobieta</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-lang="label_weight">Waga (kg):</label>
+                <input type="number" id="weight">
+            </div>
+            <div class="form-group">
+                <label data-lang="label_height">Wzrost (cm):</label>
+                <input type="number" id="height">
+            </div>
+            <div class="form-group">
+                <label data-lang="label_age">Wiek (lat):</label>
+                <input type="number" id="age">
+            </div>
+            <button class="primary-btn" onclick="calculateProfile()" data-lang="btn_calc">Oblicz i Zapisz</button>
+            
+            <div id="results" class="results-box" style="display:none;">
+                <p><span data-lang="res_water">Sugerowana woda</span>: <span id="res-water">0</span> ml</p>
+                <p>PPM (BMR): <span id="res-bmr">0</span> kcal</p>
+            </div>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #444;">
+            <button onclick="logout()" style="background-color: #d9534f; width:100%;">Wyloguj</button>
+        </div>
+
+    </div>
+
+    <div id="auth-modal" class="modal">
+
+        <div class="modal-content" style="width: 300px; text-align:center;">
+            <span class="close-modal" onclick="document.getElementById('auth-modal').style.display='none'">&times;</span>
+            <h2 id="auth-title">Logowanie</h2>
+            <div class="form-group">
+                <input type="text" id="auth-username" placeholder="Login">
+            </div>
+            <div class="form-group">
+                <input type="password" id="auth-password" placeholder="Hasło">
+            </div>
+            <button class="primary-btn" onclick="submitAuth()">Zatwierdź</button>
+            <p style="margin-top:10px; font-size:0.8rem; cursor:pointer; color:var(--primary);" onclick="toggleAuthMode()" id="auth-switch">Nie masz konta? Zarejestruj się</p>
+        </div>
+
+    </div>
+
+    <div id="chart-modal" class="modal">
+
+        <div class="modal-content" style="width: 800px; max-width: 90vw; height: 600px; display: flex; flex-direction: column;">
+            <span class="close-modal" onclick="document.getElementById('chart-modal').style.display='none'">&times;</span>
+            <h2 style="color: var(--light-purple); margin-bottom: 20px;">📊 Twoje Postępy</h2>
+            
+            <div class="controls-row" style="justify-content: space-between; margin-bottom: 20px;">
+                <select id="chart-type" onchange="loadChartData()" style="padding: 8px; width: 45%;">
+                    <option value="water">💧 Nawodnienie (ml)</option>
+                    <option value="kcal">🔥 Kalorie (kcal)</option>
+                    <option value="steps">👣 Kroki</option>
+                    <option value="sleep">💤 Sen (h)</option>
+                </select>
+
+                <select id="chart-range" onchange="loadChartData()" style="padding: 8px; width: 45%;">
+                    <option value="7">Ostatnie 7 dni</option>
+                    <option value="30">Ostatnie 30 dni</option>
+                    <option value="year">Ten rok (średnia miesięczna)</option>
+                </select>
+            </div>
+
+            <div style="flex-grow: 1; position: relative; width: 100%;">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="index_script.js"></script>
+    
+</body>
+</html>
