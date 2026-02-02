@@ -1,15 +1,16 @@
+// CONFIGURATION & TRANSLATIONS
 const translations = 
 {
     pl:
     {
         nav_main: "Główna", nav_health: "Zdrowie", nav_calendar: "Kalendarz",
-        btn_note: "📝 Notatka", btn_todo: "📋 Lista To-Do", btn_reminder: "⏰ Przypomnienie", btn_chart: "📊 Wykres",
+        btn_note: "📝 Notatka", btn_todo: "📋 Lista TO-DO", btn_reminder: "⏰ Przypomnienie", btn_chart: "📊 Wykres",
         health_water: "💧 Nawodnienie", health_kcal: "🔥 Kalorie", health_steps: "👣 Kroki", health_sleep: "💤 Sen",
         goal: "Cel", unit_ml: "ml", btn_add: "+", btn_reset: "Reset", btn_update: "Aktualizuj", btn_set: "Ustaw",
         profile_title: "👤 Twój Profil", label_gender: "Płeć:", label_weight: "Waga (kg):", label_height: "Wzrost (cm):",
         label_age: "Wiek (lat):", opt_male: "Mężczyzna", opt_female: "Kobieta", btn_calc: "Oblicz i Zapisz",
         res_water: "Sugerowana woda",
-        widget_note: "📝 Notatka", widget_todo: "✅ Lista To-Do", widget_reminder: "⏰ Przypomnienie",
+        widget_note: "📝 Notatka", widget_todo: "✅ Lista TO-DO", widget_reminder: "⏰ Przypomnienie",
         rem_msg_placeholder: "Treść przypomnienia...", rem_time_label: "Czas:", rem_repeat: "Powtarzaj",
         rem_every: "Co ile:", rem_unit_min: "Minut", rem_unit_hour: "Godzin", rem_unit_day: "Dni", rem_unit_month: "Miesięcy",
         rem_btn_set: "Aktywuj", rem_status_active: "Aktywne na:",
@@ -20,13 +21,13 @@ const translations =
     en:
     {
         nav_main: "Main", nav_health: "Health", nav_calendar: "Calendar",
-        btn_note: "📝 Note", btn_todo: "📋 To-Do List", btn_reminder: "⏰ Reminder", btn_chart: "📊 Chart",
+        btn_note: "📝 Note", btn_todo: "📋 TO-DO List", btn_reminder: "⏰ Reminder", btn_chart: "📊 Chart",
         health_water: "💧 Hydration", health_kcal: "🔥 Calories", health_steps: "👣 Steps", health_sleep: "💤 Sleep",
         goal: "Goal", unit_ml: "ml", btn_add: "+", btn_reset: "Reset", btn_update: "Update", btn_set: "Set",
         profile_title: "👤 Your Profile", label_gender: "Gender:", label_weight: "Weight (kg):", label_height: "Height (cm):",
         label_age: "Age (years):", opt_male: "Male", opt_female: "Female", btn_calc: "Calc & Save",
         res_water: "Suggested Water",
-        widget_note: "📝 Note", widget_todo: "✅ To-Do List", widget_reminder: "⏰ Reminder",
+        widget_note: "📝 Note", widget_todo: "✅ TO-DO List", widget_reminder: "⏰ Reminder",
         rem_msg_placeholder: "Reminder text...", rem_time_label: "Time:", rem_repeat: "Repeat",
         rem_every: "Every:", rem_unit_min: "Minutes", rem_unit_hour: "Hours", rem_unit_day: "Days", rem_unit_month: "Months",
         rem_btn_set: "Activate", rem_status_active: "Active for:",
@@ -36,6 +37,7 @@ const translations =
     }
 };
 
+// GLOBAL STATE VARIABLES
 let currentLang = 'pl';
 let isLogged = false;
 let currentAuthMode = 'login';
@@ -49,6 +51,7 @@ let goals = {water: 2000, kcal: 2000, steps: 10000, sleep: 8};
 let currentStats = {water: 0, kcal: 0, steps: 0, sleep: 0};
 let myChart = null;
 
+// START FUNCTION (executed when the window finishes loading)
 window.onload = function()
 {
     applyLanguage();
@@ -57,7 +60,9 @@ window.onload = function()
     renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
 };
 
+// API & AUTHENTICATION HANDLING
 
+// generic async POST wrapper (PHP)
 async function apiCall(action, payload = {})
 {
     payload.action = action;
@@ -69,7 +74,7 @@ async function apiCall(action, payload = {})
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
-        return await response.json();
+        return await response.json(); // return parsed JSON response
     }
     catch (error)
     {
@@ -78,24 +83,28 @@ async function apiCall(action, payload = {})
     }
 }
 
+// checks server-side session status
 async function checkSession()
 {
     const res = await apiCall('check_session');
     if (res.status === 'logged_in')
     {
         isLogged = true;
+        // update UI for logged-in state
         document.getElementById('auth-buttons').style.display = 'none';
         document.getElementById('profile-btn').style.display = 'flex';
-        loadDataFromDB();
+        loadDataFromDB(); // fetch user data
     }
     else
     {
         isLogged = false;
+        // update UI for guest state
         document.getElementById('auth-buttons').style.display = 'block';
         document.getElementById('profile-btn').style.display = 'none';
     }
 }
 
+// opens the Login/Register modal
 function openAuthModal(mode)
 {
     currentAuthMode = mode;
@@ -104,11 +113,13 @@ function openAuthModal(mode)
     document.getElementById('auth-switch').innerText = mode === 'login' ? 'Nie masz konta? Zarejestruj się' : 'Masz konto? Zaloguj się';
 }
 
+// switches between Login and Register views within the modal
 function toggleAuthMode()
 {
     openAuthModal(currentAuthMode === 'login' ? 'register' : 'login');
 }
 
+// handles the form submission for auth (login or register)
 async function submitAuth()
 {
     const user = document.getElementById('auth-username').value;
@@ -122,10 +133,11 @@ async function submitAuth()
         if(currentAuthMode === 'register')
         {
             alert(res.msg);
-            toggleAuthMode();
+            toggleAuthMode(); // switch to login after successful registration
         }
         else
         {
+            // success login: close modal and clear inputs
             document.getElementById('auth-modal').style.display = 'none';
             document.getElementById('auth-username').value = '';
             document.getElementById('auth-password').value = '';
@@ -134,34 +146,42 @@ async function submitAuth()
     }
     else
     {
-        alert(res.msg);
+        alert(res.msg); // show error message
     }
 }
 
+// logs the user out and reloads page
 async function logout()
 {
     await apiCall('logout');
     location.reload(); 
 }
 
+// DATA MANAGEMENT (LOAD/SAVE)
+
+// loads widgets and daily stats from database
 async function loadDataFromDB()
 {
+    // load widgets
     const wRes = await apiCall('load_widgets');
     if (wRes.status === 'success')
     {
-        document.getElementById('main-tab').innerHTML = '';
+        document.getElementById('main-tab').innerHTML = ''; // clear current widgets
         remindersList = []; 
         wRes.widgets.forEach(w =>
         {
-            restoreWidget(w)
+            restoreWidget(w); // re-create each widget from DB data
         });
+        // refresh calendar to show reminder dots
         renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
     }
 
+    // load daily stats
     const sRes = await apiCall('load_stats', { date: new Date().toISOString().slice(0,10) });
     if (sRes.status === 'success')
     {
         const d = sRes.data;
+        // parse database values into local state
         currentStats =
         { 
             water: parseInt(d.water_current), 
@@ -176,10 +196,11 @@ async function loadDataFromDB()
             steps: parseInt(d.steps_goal),
             sleep: parseFloat(d.sleep_goal)
         };
-        updateHealthUI();
+        updateHealthUI(); // update health dashboard UI
     }
 }
 
+// saves current stats to DB with debouncing (waits 1s after last change)
 function saveStatsToDB()
 {
     if (!isLogged) return;
@@ -190,12 +211,16 @@ function saveStatsToDB()
     }, 1000); 
 }
 
+// UI & NAVIGATION LOGIC
+
+// toggles between Polish and English
 function toggleLanguage()
 {
     currentLang = currentLang === 'pl' ? 'en' : 'pl';
     applyLanguage();
 }
 
+// updates all text elements with `data-lang` attribute
 function applyLanguage()
 {
     const t = translations[currentLang];
@@ -204,36 +229,45 @@ function applyLanguage()
         const key = el.getAttribute('data-lang');
         if (t[key]) el.innerText = t[key];
     });
-    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth()); // refresh calendar headers
 }
 
+// handles switching between Main, Health, and Calendar tabs
 function switchTab(tabName)
 {
+    // hide all tabs
     document.querySelectorAll('.tab-content').forEach(el =>
     {
         el.style.display = 'none';
         el.classList.remove('active-tab');
     });
+    // reset nav buttons
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
     
+    // show selected tab
     document.getElementById(`${tabName}-tab`).style.display = 'block';
     document.getElementById(`${tabName}-tab`).classList.add('active-tab');
     document.querySelector(`.nav-btn[onclick="switchTab('${tabName}')"]`).classList.add('active');
     currentTab = tabName;
 }
 
+// toggles visibility of the profile calculator modal
 function toggleProfileModal()
 {
     const modal = document.getElementById('profile-modal');
     modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
 }
 
+// minimizes/expands a widget
 function toggleCollapse(btn)
 {
     const widget = btn.closest('.widget');
     widget.classList.toggle('collapsed');
 }
 
+// HEALTH CALCULATIONS & LOGIC
+
+// calculates BMR (Basal Metabolic Rate) and suggested water intake
 function calculateProfile()
 {
     const gender = document.getElementById('gender').value;
@@ -243,21 +277,26 @@ function calculateProfile()
 
     if (!weight || !height || !age) return;
 
+    // Mifflin-St Jeor Equation for BMR
     let bmr = (10 * weight) + (6.25 * height) - (5 * age);
     bmr += (gender === 'male' ? 5 : -161);
     
+    // simple water calculation (approx 33ml per kg)
     let water = weight * 33;
 
+    // display results in modal
     document.getElementById('res-water').innerText = Math.round(water);
     document.getElementById('res-bmr').innerText = Math.round(bmr);
     document.getElementById('results').style.display = 'block';
 
+    // update global goals
     goals.water = Math.round(water);
     goals.kcal = Math.round(bmr);
     updateHealthUI();
     saveStatsToDB();
 }
 
+// prompts user to manually edit a specific health goal
 function editGoal(type)
 {
     const t = translations[currentLang];
@@ -270,8 +309,10 @@ function editGoal(type)
     }
 }
 
+// updates the Health Dashboard UI (text, progress bars, macros)
 function updateHealthUI()
 {
+    // helper function to update a single stat
     const updateStat = (key, unit) =>
     {
         const goalEl = document.getElementById(`${key}-goal-disp`);
@@ -290,10 +331,11 @@ function updateHealthUI()
     updateStat('steps', '');
     updateStat('sleep', 'h');
 
+    // calculate macros (Standard split: 50% Carbs, 25% Protein, 25% Fat)
     const kcalGoal = goals.kcal || 0;
-    const p = Math.round((kcalGoal * 0.25) / 4);
-    const c = Math.round((kcalGoal * 0.50) / 4);
-    const f = Math.round((kcalGoal * 0.25) / 9);
+    const p = Math.round((kcalGoal * 0.25) / 4);    // Protein = 4 kcal/g
+    const c = Math.round((kcalGoal * 0.50) / 4);    // Carbs = 4 kcal/g
+    const f = Math.round((kcalGoal * 0.25) / 9);    // Fat = 9 kcal/g
 
     const elP = document.getElementById('macro-p');
     const elC = document.getElementById('macro-c');
@@ -304,20 +346,26 @@ function updateHealthUI()
     if(elF) elF.innerText = f;
 }
 
+// helper functions for buttons to update specific stats
 function addWater() { currentStats.water += parseFloat(document.getElementById('glass-size').value) || 250; updateHealthUI(); saveStatsToDB(); }
 function resetWater() { currentStats.water = 0; updateHealthUI(); saveStatsToDB(); }
 function addKcal() { currentStats.kcal += parseFloat(document.getElementById('kcal-input').value) || 0; document.getElementById('kcal-input').value = ''; updateHealthUI(); saveStatsToDB(); }
 function updateSteps() { currentStats.steps = parseFloat(document.getElementById('steps-input').value) || 0; updateHealthUI(); saveStatsToDB(); }
 function updateSleep() { currentStats.sleep = parseFloat(document.getElementById('sleep-input').value) || 0; updateHealthUI(); saveStatsToDB(); }
 
+// WIDGET SYSTEM (Create, Restore, Logic)
+
+// creates a new widget or restores one from DB
 async function createWidget(type, loadedData = null)
 {
     const t = translations[currentLang];
     const container = document.getElementById(currentTab === 'main' ? 'main-tab' : 'health-tab');
     
+    // create DOM element for widget
     const div = document.createElement('div');
     div.classList.add('widget', 'draggable');
     
+    // set position
     if (loadedData)
     {
         div.style.left = loadedData.pos_x + 'px';
@@ -331,9 +379,10 @@ async function createWidget(type, loadedData = null)
     div.style.width = '280px'; div.style.height = '220px';
 
     let contentHTML = '', title = 'Widget';
-    let uniqueId = loadedData ? loadedData.id : Date.now();
+    let uniqueId = loadedData ? loadedData.id : Date.now(); // temp ID if new
     let contentData = loadedData ? JSON.parse(loadedData.content) : {};
 
+    // generate HTML based on widget type
     if (type === 'note')
     {
         title = t.widget_note;
@@ -362,6 +411,7 @@ async function createWidget(type, loadedData = null)
         const displayForm = isActive ? 'none' : 'block';
         const msgVal = contentData.msg || '';
         
+        // complex HTML for reminder form and status
         contentHTML =
         `
             <div class="reminder-form" id="rem-form-${uniqueId}" style="display:${displayForm}">
@@ -384,6 +434,7 @@ async function createWidget(type, loadedData = null)
             <div id="rem-status-${uniqueId}" class="reminder-next-info">${isActive ? (t.rem_status_active + ' ' + new Date(contentData.time).toLocaleString()) : ''}</div>
         `;
         
+        // register active reminder in memory
         if(isActive)
         {
             contentData.id = uniqueId;
@@ -391,6 +442,7 @@ async function createWidget(type, loadedData = null)
         }
     }
 
+    // assemble final widget structure
     div.innerHTML = 
     `
         <div class="widget-header">
@@ -407,6 +459,7 @@ async function createWidget(type, loadedData = null)
 
     container.appendChild(div);
 
+    // hydrate TODO List if items exist
     if (type === 'todo' && contentData.items)
     {
         const ul = div.querySelector('ul');
@@ -418,6 +471,7 @@ async function createWidget(type, loadedData = null)
         });
     }
 
+    // save new widget to DB immediately to get an ID
     if (!loadedData && isLogged)
     {
         const res = await apiCall('save_widget',
@@ -433,11 +487,13 @@ async function createWidget(type, loadedData = null)
     }
 }
 
+// wrapper to restore a widget from DB object
 function restoreWidget(dbWidget)
 {
     createWidget(dbWidget.type, dbWidget);
 }
 
+// adds an item to the TO-DO list
 function addTodoItem(input)
 {
     if (!input.value.trim()) return;
@@ -449,18 +505,21 @@ function addTodoItem(input)
     saveWidgetContent(input);
 }
 
+// clears all items in a TO-DO list
 function resetTodo(btn)
 {
     btn.closest('.widget-body').querySelector('ul').innerHTML = '';
     saveWidgetContent(btn);
 }
 
+// show/hide repeat options in reminder widget
 function toggleRemInputs(id)
 {
     const isRepeat = document.getElementById(`rem-repeat-${id}`).checked;
     document.getElementById(`rem-opts-${id}`).style.display = isRepeat ? 'flex' : 'none';
 }
 
+// sets a reminder logic active
 function activateReminder(id, fromButton = false)
 {
     const msg = document.getElementById(`rem-msg-${id}`).value;
@@ -471,12 +530,13 @@ function activateReminder(id, fromButton = false)
 
     const widgetBody = document.getElementById(`rem-form-${id}`).closest('.widget-body');
 
+    // construct reminder object
     const reminderObj =
     {
         id: id,
         msg: msg,
         dateStr: dateStr,
-        time: new Date(dateStr).getTime(),
+        time: new Date(dateStr).getTime(), // timestamp for comparison
         repeat: isRepeat,
         active: true,
         interval: 1,
@@ -489,18 +549,21 @@ function activateReminder(id, fromButton = false)
         reminderObj.unit = document.getElementById(`rem-unit-${id}`).value;
     }
 
+    // vpdate global list
     remindersList = remindersList.filter(r => r.id != id);
     remindersList.push(reminderObj);
 
+    // update UI
     document.getElementById(`rem-form-${id}`).style.display = 'none';
     const statusDiv = document.getElementById(`rem-status-${id}`);
     statusDiv.innerText = `${translations[currentLang].rem_status_active} ${new Date(dateStr).toLocaleString()}`;
     
-    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth()); // show marker on calendar
 
     if(fromButton) saveWidgetContent(widgetBody);
 }
 
+// collects widget data and calls API to save
 function saveWidgetContent(element)
 {
     if(!isLogged) return;
@@ -518,6 +581,7 @@ function saveWidgetContent(element)
 
     let content = {};
 
+    // extract content based on type
     if (type === 'note')
     {
         content = {text: widget.querySelector('textarea').value};
@@ -552,6 +616,7 @@ function saveWidgetContent(element)
         }
     }
 
+    // debounce save request
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() =>
     {
@@ -559,6 +624,7 @@ function saveWidgetContent(element)
     }, 500);
 }
 
+// deletes a widget from DOM and DB
 async function deleteWidget(btn)
 {
     const widget = btn.closest('.widget');
@@ -566,6 +632,7 @@ async function deleteWidget(btn)
     {
         await apiCall('delete_widget', {widget_id: widget.dataset.id});
     }
+    // clean up reminder list if applicable
     const uid = widget.querySelector('.widget-body').dataset.uid;
     remindersList = remindersList.filter(r => r.id != uid);
     renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
@@ -573,15 +640,19 @@ async function deleteWidget(btn)
     widget.remove();
 }
 
+// DRAG & DROP SYSTEM
+
 let activeItem = null, activeOffsetX = 0, activeOffsetY = 0;
 
+// mouse down: start dragging
 document.addEventListener('mousedown', (e) =>
 {
+    // only drag if clicking header, but not the controls (x or _)
     if (e.target.closest('.widget-header') && !e.target.closest('.widget-controls'))
     {
         activeItem = e.target.closest('.widget');
         zIndexCounter++;
-        activeItem.style.zIndex = zIndexCounter;
+        activeItem.style.zIndex = zIndexCounter; // bring to front
         const rect = activeItem.getBoundingClientRect();
         activeOffsetX = e.clientX - rect.left;
         activeOffsetY = e.clientY - rect.top;
@@ -589,17 +660,20 @@ document.addEventListener('mousedown', (e) =>
     }
 });
 
+// mouse move: move widget
 document.addEventListener('mousemove', (e) =>
 {
     if (activeItem)
     {
         const container = activeItem.parentElement;
         const cRect = container.getBoundingClientRect();
+        // calculate new position relative to container
         activeItem.style.left = `${e.clientX - cRect.left - activeOffsetX}px`;
         activeItem.style.top = `${e.clientY - cRect.top - activeOffsetY}px`;
     }
 });
 
+// mouse up: stop dragging and save position
 document.addEventListener('mouseup', () =>
 {
     if (activeItem)
@@ -613,12 +687,16 @@ document.addEventListener('mouseup', () =>
     }
 });
 
+// CALENDAR LOGIC
+
+// navigates months (delta: -1 or +1)
 function changeMonth(delta)
 {
     currentDate.setMonth(currentDate.getMonth() + delta);
     renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
 }
 
+// renders the calendar grid
 function renderCalendar(year, month)
 {
     const daysLabels = currentLang === 'pl' 
@@ -634,6 +712,7 @@ function renderCalendar(year, month)
     grid.innerHTML = '';
     headerGrid.innerHTML = '';
 
+    // render day names headers
     daysLabels.forEach(dayName =>
     {
         const div = document.createElement('div');
@@ -645,11 +724,13 @@ function renderCalendar(year, month)
     const monthName = date.toLocaleString(currentLang, {month: 'long'});
     monthYearLabel.innerText = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
 
+    // calculate padding for empty days at start of month
     let firstDayIndex = date.getDay(); 
-    let adjustedIndex = (firstDayIndex === 0 ? 7 : firstDayIndex) - 1;
+    let adjustedIndex = (firstDayIndex === 0 ? 7 : firstDayIndex) - 1; // adjust for Monday start
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+    // render empty slots
     for (let i = 0; i < adjustedIndex; i++)
     {
         const div = document.createElement('div');
@@ -658,23 +739,26 @@ function renderCalendar(year, month)
     }
 
     const today = new Date();
+    // render actual days
     for (let i = 1; i <= daysInMonth; i++)
     {
         const div = document.createElement('div');
         div.classList.add('calendar-day');
         div.innerText = i;
 
+        // highlight today
         if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear())
         {
             div.classList.add('today');
         }
 
+        // check if day has a reminder
         const checkDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         const hasReminder = remindersList.some(rem => rem.active && rem.dateStr && rem.dateStr.startsWith(checkDateStr));
         
         if (hasReminder)
         {
-            div.classList.add('has-reminder');
+            div.classList.add('has-reminder'); // CSS class likely draws a dot
             div.title = "Reminder active";
         }
 
@@ -682,6 +766,9 @@ function renderCalendar(year, month)
     }
 }
 
+// REMINDER CHECK LOOP
+
+// called periodically to check if any reminder time is passed
 function checkReminders()
 {
     const now = Date.now();
@@ -692,8 +779,10 @@ function checkReminders()
     {
         if(rem.active && rem.time <= now)
         {
+            // trigger alert
             alert(`${t.alert_prefix} ${rem.msg}`);
             
+            // handle repetition logic
             if(rem.repeat)
             {
                 let nextTime = new Date(rem.time);
@@ -704,17 +793,20 @@ function checkReminders()
                 rem.time = nextTime.getTime();
                 rem.dateStr = nextTime.toISOString().slice(0, 16); 
                 
+                // update UI text
                 const statusDiv = document.getElementById(`rem-status-${rem.id}`);
                 if(statusDiv) statusDiv.innerText = `${t.rem_status_active} ${nextTime.toLocaleString()}`;
             }
             else
             {
+                // not repeating, mark as done
                 rem.active = false;
                 const statusDiv = document.getElementById(`rem-status-${rem.id}`);
                 if(statusDiv) statusDiv.innerText = "Done";
             }
             changed = true;
             
+            // save updated state to widget
             const el = document.querySelector(`[data-uid="${rem.id}"]`);
             if(el) saveWidgetContent(el);
         }
@@ -723,6 +815,9 @@ function checkReminders()
     if(changed) renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
 }
 
+// CHARTING 
+
+// opens stats chart modal
 function openChartModal()
 {
     if (!isLogged) return alert("Musisz być zalogowany, aby zobaczyć statystyki.");
@@ -730,6 +825,7 @@ function openChartModal()
     loadChartData(); 
 }
 
+// fetches historical data for chart
 async function loadChartData()
 {
     const type = document.getElementById('chart-type').value;
@@ -747,6 +843,7 @@ async function loadChartData()
     }
 }
 
+// renders chart using Chart.js
 function renderChart(data, type, range)
 {
     const ctx = document.getElementById('myChart').getContext('2d');
@@ -754,6 +851,7 @@ function renderChart(data, type, range)
     const labels = data.map(item => item.label);
     const values = data.map(item => parseFloat(item.value).toFixed(1));
 
+    // determine colors based on data type
     let color = '#7C68EE';
     let labelText = 'Wartość';
     
@@ -764,7 +862,7 @@ function renderChart(data, type, range)
 
     if (myChart)
     {
-        myChart.destroy();
+        myChart.destroy(); // destroy old chart instance before creating new one
     }
 
     myChart = new Chart(ctx,
