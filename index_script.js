@@ -549,7 +549,7 @@ function activateReminder(id, fromButton = false)
         reminderObj.unit = document.getElementById(`rem-unit-${id}`).value;
     }
 
-    // vpdate global list
+    // update global list
     remindersList = remindersList.filter(r => r.id != id);
     remindersList.push(reminderObj);
 
